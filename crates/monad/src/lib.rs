@@ -10,6 +10,7 @@
 //!   EIP-4844 rejection, and reserve-balance tracking.
 //! - Monad precompiles: repriced Ethereum precompiles, staking (0x1000) and reserve balance
 //!   (0x1001).
+//! - Opt-in replay of canonical protocol system transactions in [`protocol`].
 
 extern crate alloc;
 
@@ -37,6 +38,9 @@ pub mod page;
 
 mod precompiles;
 pub use precompiles::*;
+
+pub mod protocol;
+pub use protocol::{ProtocolSystemCall, ProtocolSystemCallError, protocol_system_call};
 
 pub mod reserve_balance;
 pub use reserve_balance::tracker::{ReserveAccount, ReserveBalanceInit, ReserveBalanceTracker};

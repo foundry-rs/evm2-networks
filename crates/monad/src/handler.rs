@@ -10,6 +10,8 @@
 //! - The system sender cannot appear as an EIP-7702 authority.
 //! - A call to an EIP-7702 delegated account dispatches to the precompile at the delegate.
 //! - The reserve-balance tracker is initialized immediately before the first frame.
+//! - With [`MonadEvmExt::protocol_replay`](crate::MonadEvmExt) enabled, legacy envelopes from the
+//!   system sender execute as protocol system calls; see [`crate::protocol`].
 //!
 //! The standard [`EvmFeatures`] flags are honored as the evm2 Ethereum handlers do:
 //! `TX_CHAIN_ID_CHECK`, `NONCE_CHECK`, `BALANCE_CHECK`, `BALANCE_TOP_UP`, `BLOCK_GAS_LIMIT_CHECK`,
@@ -18,6 +20,10 @@
 use crate::{
     MonadEvmTypes, MonadHardfork, MonadTxResultExt,
     page::{self, StoragePageKey},
+    protocol::{
+        ProtocolSystemCall, ProtocolSystemCallError, execute_protocol_system_call,
+        legacy_protocol_system_call, prepare_protocol_system_call,
+    },
     reserve_balance::{
         begin_reserve_balance_tx, end_reserve_balance_tx, reserve_account, sync_reserve_balance,
     },
@@ -384,22 +390,54 @@ fn execute_inner(
     Ok(tx_result)
 }
 
+/// Legacy transaction state: an ordinary transaction or a protocol system call.
+#[derive(Debug)]
+enum LegacyPrepared {
+    Ordinary(MonadPreparedTx),
+    Protocol(ProtocolSystemCall),
+}
+
 fn prepare_legacy(
     req: &mut TxRequest<'_, '_, MonadEvmTypes, TxLegacy>,
-) -> HandlerResult<MonadPreparedTx> {
+) -> HandlerResult<LegacyPrepared> {
+    if req.host.ext().protocol_replay
+        && let Some(call) = legacy_protocol_system_call(req.tx.signer(), req.tx.inner())?
+    {
+        prepare_protocol_system_call(req.host, &call)?;
+        return Ok(LegacyPrepared::Protocol(call));
+    }
     prepare(req.host, req.tx.signer(), &TxFields::legacy(req.tx.inner()))
+        .map(LegacyPrepared::Ordinary)
 }
 
 fn execute_legacy(
     req: TxRequest<'_, '_, MonadEvmTypes, TxLegacy>,
-    prepared: MonadPreparedTx,
+    prepared: LegacyPrepared,
 ) -> HandlerResult<TxResult<MonadEvmTypes>> {
-    execute(req.host, &TxFields::legacy(req.tx.inner()), prepared)
+    match prepared {
+        LegacyPrepared::Ordinary(prepared) => {
+            execute(req.host, &TxFields::legacy(req.tx.inner()), prepared)
+        }
+        LegacyPrepared::Protocol(call) => execute_protocol_system_call(req.host, &call),
+    }
+}
+
+/// Rejects non-legacy envelopes from the system sender while protocol replay is enabled.
+fn reject_typed_protocol_tx(
+    host: &Evm<'_, MonadEvmTypes>,
+    caller: Address,
+    tx_type: u8,
+) -> HandlerResult<()> {
+    if host.ext().protocol_replay && caller == SYSTEM_ADDRESS {
+        return Err(ProtocolSystemCallError::NotLegacy { tx_type }.into());
+    }
+    Ok(())
 }
 
 fn prepare_eip2930(
     req: &mut TxRequest<'_, '_, MonadEvmTypes, TxEip2930>,
 ) -> HandlerResult<MonadPreparedTx> {
+    reject_typed_protocol_tx(req.host, req.tx.signer(), 1)?;
     prepare(req.host, req.tx.signer(), &TxFields::eip2930(req.tx.inner()))
 }
 
@@ -413,6 +451,7 @@ fn execute_eip2930(
 fn prepare_eip1559(
     req: &mut TxRequest<'_, '_, MonadEvmTypes, TxEip1559>,
 ) -> HandlerResult<MonadPreparedTx> {
+    reject_typed_protocol_tx(req.host, req.tx.signer(), 2)?;
     prepare(req.host, req.tx.signer(), &TxFields::eip1559(req.tx.inner()))
 }
 
@@ -424,8 +463,9 @@ fn execute_eip1559(
 }
 
 fn prepare_eip4844(
-    _req: &mut TxRequest<'_, '_, MonadEvmTypes, TxEip4844Variant>,
+    req: &mut TxRequest<'_, '_, MonadEvmTypes, TxEip4844Variant>,
 ) -> HandlerResult<MonadPreparedTx> {
+    reject_typed_protocol_tx(req.host, req.tx.signer(), 3)?;
     Err(MonadInvalidTransaction::Eip4844NotSupported.into())
 }
 
@@ -439,6 +479,7 @@ fn execute_eip4844(
 fn prepare_eip7702(
     req: &mut TxRequest<'_, '_, MonadEvmTypes, LazyTxEip7702>,
 ) -> HandlerResult<MonadPreparedTx> {
+    reject_typed_protocol_tx(req.host, req.tx.signer(), 4)?;
     let tx = req.tx.inner();
     if tx.authorization_list.is_empty() {
         return Err(HandlerError::EmptyAuthorizationList);

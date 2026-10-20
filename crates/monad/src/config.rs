@@ -64,6 +64,11 @@ pub struct MonadEvmExt {
     pub memory_pool_offset: u64,
     /// Journal cursor feeding the reserve-balance tracker.
     pub reserve_balance_sync: ReserveBalanceSync,
+    /// Executes canonical legacy envelopes from the Monad system sender as protocol system calls.
+    ///
+    /// Off by default. Enable it only to replay trusted historical blocks; with it disabled every
+    /// transaction keeps the ordinary handler behavior. See [`crate::protocol`].
+    pub protocol_replay: bool,
 }
 
 impl MonadEvmExt {
@@ -85,6 +90,11 @@ impl MonadEvmExt {
     /// Sets whether transaction boundaries preserve the reserve-balance tracker.
     pub const fn set_preserve_reserve_balance_tracker(&mut self, preserve: bool) {
         self.preserve_reserve_balance_tracker = preserve;
+    }
+
+    /// Sets whether legacy envelopes from the system sender replay as protocol system calls.
+    pub const fn set_protocol_replay(&mut self, enabled: bool) {
+        self.protocol_replay = enabled;
     }
 }
 
