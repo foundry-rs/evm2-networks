@@ -388,7 +388,7 @@ fn handle_get_execution_validator_set<CTX: StorageReader>(
 ///
 /// StorageArray layout:
 /// - Base slot: length (u64, left-aligned)
-/// - Base slot + 1 + i: element[i] (u64, left-aligned)
+/// - Base slot + 1 + i: element\[i\] (u64, left-aligned)
 fn handle_get_validator_set_impl<CTX: StorageReader>(
     context: &mut CTX,
     input: &[u8],
