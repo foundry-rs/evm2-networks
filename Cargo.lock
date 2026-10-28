@@ -978,7 +978,7 @@ dependencies = [
  "base-execution-eip8130",
  "base-precompile-storage",
  "evm2",
- "k256 0.13.4",
+ "k256 0.14.0",
  "revm",
 ]
 
@@ -2328,6 +2328,7 @@ dependencies = [
  "elliptic-curve 0.14.1",
  "primeorder 0.14.0",
  "sha2 0.11.1",
+ "signature 3.0.0",
  "wnaf",
 ]
 
