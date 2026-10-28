@@ -444,6 +444,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "arbitrum"
+version = "0.1.0"
+dependencies = [
+ "alloy-consensus",
+ "alloy-eips",
+ "alloy-primitives",
+ "alloy-sol-types",
+ "evm2",
+ "evm2-macros",
+]
+
+[[package]]
 name = "ark-bls12-381"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
