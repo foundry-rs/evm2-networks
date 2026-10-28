@@ -40,5 +40,5 @@ revm = { version = "43.0.0", default-features = false, features = ["std"] }
 # base: the revm execution path, used as the source of truth by the differential parity tests.
 base-common-chains = { git = "https://github.com/foundry-rs/base", rev = "2aa8bc46e6b4272ef3bf0905e1a5660ee2525e72", default-features = false, features = ["std"] }
 base-common-evm = { git = "https://github.com/foundry-rs/base", rev = "2aa8bc46e6b4272ef3bf0905e1a5660ee2525e72", default-features = false, features = ["std", "optional_balance_check", "optional_fee_charge", "optional_no_base_fee"] }
-k256 = { version = "0.13", features = ["ecdsa"] }
+k256 = { version = "0.14", features = ["ecdsa"] }
 alloy-evm = { version = "0.39", default-features = false, features = ["std"] }
