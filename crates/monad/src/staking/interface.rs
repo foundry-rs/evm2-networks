@@ -9,7 +9,7 @@
 
 alloy_sol_types::sol! {
     /// Monad staking precompile interface at address 0x1000.
-    /// Reference: https://docs.monad.xyz/developer-essentials/staking/staking-precompile
+    /// Reference: <https://docs.monad.xyz/developer-essentials/staking/staking-precompile>
     interface IMonadStaking {
         // View functions
         function getEpoch() external returns (uint64 epoch, bool inEpochDelayPeriod);
