@@ -1187,6 +1187,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bsc"
+version = "0.1.0"
+dependencies = [
+ "alloy-consensus",
+ "alloy-eips",
+ "alloy-primitives",
+ "alloy-rlp",
+ "blst",
+ "evm2",
+ "k256 0.14.0",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

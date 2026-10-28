@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/op", "crates/base", "crates/monad"]
+members = ["crates/op", "crates/base", "crates/monad", "crates/bsc"]
 resolver = "3"
 
 [workspace.package]
@@ -32,6 +32,7 @@ unused_must_use = "warn"
 op-evm2 = { path = "crates/op", default-features = false }
 base-evm2 = { path = "crates/base", default-features = false }
 monad-evm2 = { path = "crates/monad", default-features = false }
+bsc = { path = "crates/bsc", default-features = false }
 
 # evm2: keep in lockstep with the Tempo evm2 integration (tempoxyz/tempo#7871) so every network
 # shares one `evm2` crate graph in Foundry.
@@ -44,6 +45,10 @@ alloy-eips = { version = "2.5.0", default-features = false }
 alloy-primitives = { version = "1.7.0", default-features = false }
 alloy-rlp = { version = "0.3", default-features = false }
 alloy-sol-types = { version = "1.7.0", default-features = false }
+
+# crypto: match evm2's versions.
+blst = "0.3.15"
+k256 = { version = "0.14", default-features = false }
 
 # misc
 auto_impl = "1"
