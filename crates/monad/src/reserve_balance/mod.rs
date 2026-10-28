@@ -15,7 +15,7 @@ use crate::{MonadEvmTypes, MonadHardfork, page::PAGE_TRACKER_ADDRESS};
 use alloy_primitives::{Address, B256, Bytes, KECCAK256_EMPTY, U256, address};
 use evm2::{
     DatabaseError, Evm,
-    evm::{AccountInfo, DynDatabase, JournalEntry, precompile::PrecompileOutput},
+    evm::{AccountFlags, AccountInfo, DynDatabase, JournalEntry, precompile::PrecompileOutput},
     interpreter::{GasTracker, Message, MessageKind},
     precompiles::{PrecompileError, PrecompileHalt, PrecompileResult},
 };
@@ -237,19 +237,21 @@ pub fn sync_reserve_balance(evm: &mut Evm<'_, MonadEvmTypes>) -> Result<(), Data
     // Classify new account sessions.
     let mut derived = Vec::new();
     for (index, entry) in events.iter().enumerate() {
-        let JournalEntry::AccountChange { address, previous, previous_is_destroyed, .. } = entry
-        else {
+        let JournalEntry::AccountChange { address, previous, previous_flags } = entry else {
             continue;
         };
-        let before = SessionState::from_info(previous.as_ref(), *previous_is_destroyed);
+        let before = SessionState::from_info(
+            previous.as_ref(),
+            previous_flags.contains(AccountFlags::DESTROYED),
+        );
         let next = events[index + 1..].iter().find_map(|later| match later {
-            JournalEntry::AccountChange {
-                address: later_address,
-                previous,
-                previous_is_destroyed,
-                ..
-            } if later_address == address => {
-                Some(SessionState::from_info(previous.as_ref(), *previous_is_destroyed))
+            JournalEntry::AccountChange { address: later_address, previous, previous_flags }
+                if later_address == address =>
+            {
+                Some(SessionState::from_info(
+                    previous.as_ref(),
+                    previous_flags.contains(AccountFlags::DESTROYED),
+                ))
             }
             _ => None,
         });

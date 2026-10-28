@@ -1798,7 +1798,7 @@ checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 [[package]]
 name = "evm2"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/evm2?rev=40908322a42aa14bb10da48ff23031e4270d039f#40908322a42aa14bb10da48ff23031e4270d039f"
+source = "git+https://github.com/alloy-rs/evm2?rev=3ca5cafaf29b28c6a148021bf4f101790dbb7e33#3ca5cafaf29b28c6a148021bf4f101790dbb7e33"
 dependencies = [
  "alloy-consensus",
  "alloy-eip7928",
@@ -1812,6 +1812,7 @@ dependencies = [
  "arrayref",
  "aurora-engine-modexp",
  "auto_impl",
+ "bitflags 2.13.2",
  "c-kzg",
  "derive-where",
  "evm2-macros",
@@ -1833,7 +1834,7 @@ dependencies = [
 [[package]]
 name = "evm2-macros"
 version = "0.1.0"
-source = "git+https://github.com/alloy-rs/evm2?rev=40908322a42aa14bb10da48ff23031e4270d039f#40908322a42aa14bb10da48ff23031e4270d039f"
+source = "git+https://github.com/alloy-rs/evm2?rev=3ca5cafaf29b28c6a148021bf4f101790dbb7e33#3ca5cafaf29b28c6a148021bf4f101790dbb7e33"
 dependencies = [
  "proc-macro2",
  "quote",
