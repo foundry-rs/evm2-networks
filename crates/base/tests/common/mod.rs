@@ -339,7 +339,7 @@ pub fn run_evm2_seq(
             failed_deposit: result.ext.failed_deposit,
             created: result.created_address,
             output: result.output.clone(),
-            logs: result.logs.clone(),
+            logs: result.logs,
         });
     }
     let dumps: Vec<_> =

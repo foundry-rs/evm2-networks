@@ -209,8 +209,7 @@ fn prepare(
         tx.value,
     );
     if is_eip7702 {
-        let per_auth =
-            u64::from(host.version().gas_params.get(GasId::TxEip7702PerEmptyAccountCost));
+        let per_auth = host.version().gas_params.get(GasId::TxEip7702PerEmptyAccountCost);
         intrinsic += (tx.authorization_list.len() as u64).saturating_mul(per_auth);
     }
     validate_intrinsic_gas(tx.gas_limit, intrinsic, 0)?;

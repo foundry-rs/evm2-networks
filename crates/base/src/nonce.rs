@@ -64,9 +64,9 @@ pub(crate) fn run_nonce_manager(
     // The reference reads the canonical system account even if the precompile is relocated.
     let load = evm.sload(&NonceManagerSlots::ADDRESS, &slot, false)?;
     let params = &Version::base(SpecId::OSAKA).gas_params;
-    let mut cost = u64::from(params.get(GasId::WarmStorageReadCost));
+    let mut cost = params.get(GasId::WarmStorageReadCost);
     if load.is_cold {
-        cost += u64::from(params.get(GasId::ColdStorageAdditionalCost));
+        cost += params.get(GasId::ColdStorageAdditionalCost);
     }
     gas.spend(cost).map_err(|_| PrecompileHalt::OutOfGas)?;
 

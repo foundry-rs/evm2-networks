@@ -35,8 +35,8 @@ monad-evm2 = { path = "crates/monad", default-features = false }
 
 # evm2: keep in lockstep with the Tempo evm2 integration (tempoxyz/tempo#7871) so every network
 # shares one `evm2` crate graph in Foundry.
-evm2 = { git = "https://github.com/mablr/evm2", rev = "64785b94b5697f6d4bb9f03d9884dd4cf0356cf2", default-features = false, features = ["std"] }
-evm2-macros = { git = "https://github.com/mablr/evm2", rev = "64785b94b5697f6d4bb9f03d9884dd4cf0356cf2" }
+evm2 = { git = "https://github.com/mablr/evm2", rev = "ee1f36084a038cfcd2396164a2753eda1970b181", default-features = false, features = ["std"] }
+evm2-macros = { git = "https://github.com/mablr/evm2", rev = "ee1f36084a038cfcd2396164a2753eda1970b181" }
 
 # alloy: match Foundry's versions.
 alloy-consensus = { version = "2.5.0", default-features = false }

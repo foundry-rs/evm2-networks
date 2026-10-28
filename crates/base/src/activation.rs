@@ -122,7 +122,7 @@ impl Ctx<'_, '_> {
     }
 
     fn gas(&self, id: GasId) -> u64 {
-        u64::from(self.params.get(id))
+        self.params.get(id)
     }
 
     fn sload(&mut self, key: U256) -> Result<U256> {

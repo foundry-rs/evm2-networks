@@ -207,7 +207,7 @@ impl<'e, 'a> BaseStorageProvider<'e, 'a> {
     }
 
     fn gas(&self, id: GasId) -> u64 {
-        u64::from(self.params.get(id))
+        self.params.get(id)
     }
 
     const fn is_metered(&self) -> bool {

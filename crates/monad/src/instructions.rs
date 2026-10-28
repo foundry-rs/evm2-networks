@@ -294,7 +294,7 @@ fn load_acc_and_calc_gas(
     stack_gas_limit: u64,
 ) -> Result<(u64, u64, Bytecode, alloy_primitives::Address)> {
     if transfers_value {
-        gas.spend(state.gas_params().get(GasId::TransferValueCost).into())?;
+        gas.spend(state.gas_params().get(GasId::TransferValueCost))?;
     }
 
     let additional_cold_cost = state.gas_params().cold_account_additional_cost();
@@ -312,7 +312,7 @@ fn load_acc_and_calc_gas(
     if state.feature(EvmFeatures::EIP7702)
         && let Some(delegated_address) = code.eip7702_address()
     {
-        cost += u64::from(state.gas_params().get(GasId::WarmStorageReadCost));
+        cost += state.gas_params().get(GasId::WarmStorageReadCost);
         if cost > remaining_gas {
             return Err(InstrStop::OutOfGas);
         }
@@ -339,7 +339,7 @@ fn load_acc_and_calc_gas(
                 .map_err(|error| state.fail(error))?,
         )
     {
-        cost += u64::from(state.gas_params().get(GasId::NewAccountCost));
+        cost += state.gas_params().get(GasId::NewAccountCost);
         if features.contains(EvmFeatures::EIP8037) && transfers_value {
             new_account_state_gas = state.gas_params().new_account_state_gas();
         }
@@ -355,7 +355,7 @@ fn load_acc_and_calc_gas(
     gas.spend(gas_limit)?;
 
     if transfers_value {
-        gas_limit = gas_limit.saturating_add(state.gas_params().get(GasId::CallStipend).into());
+        gas_limit = gas_limit.saturating_add(state.gas_params().get(GasId::CallStipend));
     }
 
     Ok((gas_limit, new_account_state_gas, code, code_address))
@@ -519,7 +519,7 @@ fn create_inner<const MIP3: bool>(
     let create_cost = if is_create2 {
         state.gas_params().create2_cost(len)
     } else {
-        state.gas_params().get(GasId::Create).into()
+        state.gas_params().get(GasId::Create)
     };
     gas.spend(create_cost)?;
 
@@ -610,8 +610,7 @@ fn create_inner<const MIP3: bool>(
 /// SLOAD with MIP-8 page-based warmth.
 #[instruction(EvmTypes = MonadEvmTypes, dynamic_gas)]
 pub fn sload(cx: _, [key]: [Word]) -> Result<out> {
-    let additional_cold_cost: u64 =
-        cx.state.gas_params().get(GasId::ColdStorageAdditionalCost).into();
+    let additional_cold_cost: u64 = cx.state.gas_params().get(GasId::ColdStorageAdditionalCost);
     let skip_cold_load = cx.gas.remaining() < additional_cold_cost;
     let destination = cx.state.message().destination;
     let page_key = StoragePageKey::from_slot(destination, *key);
@@ -633,13 +632,12 @@ pub fn sload(cx: _, [key]: [Word]) -> Result<out> {
 pub fn sstore(cx: _, [key, value]: [Word]) -> Result {
     require_non_staticcall(cx.state)?;
     if cx.state.feature(EvmFeatures::EIP2200)
-        && cx.gas.remaining() <= u64::from(cx.state.gas_params().get(GasId::CallStipend))
+        && cx.gas.remaining() <= cx.state.gas_params().get(GasId::CallStipend)
     {
         return Err(InstrStop::ReentrancySentryOOG);
     }
 
-    let skip_cold_load =
-        cx.gas.remaining() < u64::from(cx.state.gas_params().get(GasId::ColdStorageCost));
+    let skip_cold_load = cx.gas.remaining() < cx.state.gas_params().get(GasId::ColdStorageCost);
     let destination = cx.state.message().destination;
     let page_key = StoragePageKey::from_slot(destination, *key);
     let is_cold = !page::is_read_accessed(cx.state.host(), page_key);
@@ -657,7 +655,7 @@ pub fn sstore(cx: _, [key, value]: [Word]) -> Result {
 
     let mut gas = page::sstore_gas(cx.state.host(), page_key, &state_load);
     if is_cold {
-        gas += u64::from(cx.state.gas_params().get(GasId::ColdStorageAdditionalCost));
+        gas += cx.state.gas_params().get(GasId::ColdStorageAdditionalCost);
     }
     cx.gas.spend(gas)?;
     Ok(())

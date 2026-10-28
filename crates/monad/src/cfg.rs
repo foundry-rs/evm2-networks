@@ -144,7 +144,7 @@ mod tests {
             let ours = monad_gas_params(spec);
             let expected = monad_revm::instructions::monad_gas_params(theirs(spec));
             for (id, revm_id) in gas_id_pairs() {
-                assert_eq!(u64::from(ours.get(id)), expected.get(revm_id), "{spec} {id:?}");
+                assert_eq!(ours.get(id), expected.get(revm_id), "{spec} {id:?}");
             }
             for (id, revm_id) in [
                 (GasId::TxCreateCost, RevmGasId::tx_create_cost()),
@@ -154,7 +154,7 @@ mod tests {
                 (GasId::SstoreSetRefund, RevmGasId::sstore_set_refund()),
                 (GasId::SstoreResetRefund, RevmGasId::sstore_reset_refund()),
             ] {
-                assert_eq!(u64::from(ours.get(id)), expected.get(revm_id), "{spec} {id:?}");
+                assert_eq!(ours.get(id), expected.get(revm_id), "{spec} {id:?}");
             }
             assert_eq!(ours.selfdestruct_cold_cost(), expected.selfdestruct_cold_cost(), "{spec}");
         }
