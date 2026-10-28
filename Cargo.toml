@@ -6,10 +6,10 @@ resolver = "3"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.96"
-authors = ["Mablr <59505383+mablr@users.noreply.github.com>"]
+authors = ["Foundry Contributors"]
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/mablr/evm2-networks"
-repository = "https://github.com/mablr/evm2-networks"
+homepage = "https://getfoundry.sh"
+repository = "https://github.com/foundry-rs/evm2-networks"
 keywords = ["evm", "evm2", "ethereum", "execution"]
 categories = ["cryptography::cryptocurrencies"]
 publish = false
@@ -29,10 +29,6 @@ unreachable_pub = "warn"
 unused_must_use = "warn"
 
 [workspace.dependencies]
-op-evm2 = { path = "crates/op", default-features = false }
-base-evm2 = { path = "crates/base", default-features = false }
-monad-evm2 = { path = "crates/monad", default-features = false }
-
 # evm2: keep in lockstep with the Tempo evm2 integration (tempoxyz/tempo#7871) so every network
 # shares one `evm2` crate graph in Foundry.
 evm2 = { git = "https://github.com/mablr/evm2", rev = "ee1f36084a038cfcd2396164a2753eda1970b181", default-features = false, features = ["std"] }
@@ -42,10 +38,7 @@ evm2-macros = { git = "https://github.com/mablr/evm2", rev = "ee1f36084a038cfcd2
 alloy-consensus = { version = "2.5.0", default-features = false }
 alloy-eips = { version = "2.5.0", default-features = false }
 alloy-primitives = { version = "1.7.0", default-features = false }
-alloy-rlp = { version = "0.3", default-features = false }
 alloy-sol-types = { version = "1.7.0", default-features = false }
 
 # misc
-auto_impl = "1"
-derive_more = { version = "2", default-features = false }
 thiserror = { version = "2", default-features = false }
