@@ -21,12 +21,12 @@ fn key(byte: u8) -> SigningKey {
 }
 
 fn address(key: &SigningKey) -> Address {
-    let point = key.verifying_key().to_encoded_point(false);
+    let point = key.verifying_key().to_sec1_point(false);
     Address::from_slice(&keccak256(&point.as_bytes()[1..])[12..])
 }
 
 fn signature(key: &SigningKey, hash: B256) -> Bytes {
-    let (signature, recovery) = key.sign_prehash_recoverable(hash.as_slice()).unwrap();
+    let (signature, recovery) = key.sign_prehash_recoverable(hash.as_slice());
     let mut bytes = signature.to_bytes().to_vec();
     bytes.push(recovery.to_byte() + 27);
     bytes.into()
