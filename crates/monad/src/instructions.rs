@@ -367,10 +367,9 @@ fn execute_child(
     message: &mut Message<MonadEvmTypes>,
 ) -> Result<evm2::interpreter::MessageResult<MonadEvmTypes>> {
     let frame_memory = state.memory().len() as u64;
-    let tx_env = state.tx();
     let host = state.host();
     host.ext_mut().memory_pool_offset += frame_memory;
-    let result = host.execute_message(tx_env, message);
+    let result = host.execute_message(message);
     let host = state.host();
     host.ext_mut().memory_pool_offset -= frame_memory;
     let result = result.map_err(|error| state.fail(error))?;

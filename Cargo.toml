@@ -31,8 +31,8 @@ unused_must_use = "warn"
 [workspace.dependencies]
 # evm2: keep in lockstep with the Tempo evm2 integration (tempoxyz/tempo#7871) so every network
 # shares one `evm2` crate graph in Foundry.
-evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "3ca5cafaf29b28c6a148021bf4f101790dbb7e33", default-features = false, features = ["std"] }
-evm2-macros = { git = "https://github.com/alloy-rs/evm2", rev = "3ca5cafaf29b28c6a148021bf4f101790dbb7e33" }
+evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "a29a283f6cd4bc65e44f5813de5e9f43553c5fda", default-features = false, features = ["std"] }
+evm2-macros = { git = "https://github.com/alloy-rs/evm2", rev = "a29a283f6cd4bc65e44f5813de5e9f43553c5fda" }
 
 # alloy: match Foundry's versions.
 alloy-consensus = { version = "2.5.0", default-features = false }

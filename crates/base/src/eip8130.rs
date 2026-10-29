@@ -394,7 +394,7 @@ fn execute_calls(
     let mut remaining = pool;
     let mut refund = 0i64;
     let mut phases = Vec::with_capacity(signed.tx().calls.len());
-    let env = TxEnvExt {
+    *host.tx_env_mut() = TxEnvExt {
         origin: prepared.sender,
         gas_price: U256::from(prepared.effective),
         chain_id: U256::from(host.version().chain_id),
@@ -430,7 +430,7 @@ fn execute_calls(
             if under_root && let Some(frame) = &mut frame {
                 frame.message.depth += 1;
             }
-            let result = execute_initial_frame(host, &env, frame, &mut gas, remaining, 0)?;
+            let result = execute_initial_frame(host, frame, &mut gas, remaining, 0)?;
             remaining = remaining
                 .checked_sub(result.gas.spent())
                 .ok_or_else(|| invalid("call consumed more gas than the phase pool contained"))?;
@@ -485,7 +485,7 @@ fn execute_root(
     prepared: &PreparedEip8130,
     pool: u64,
 ) -> HandlerResult<CallsResult> {
-    let env = TxEnvExt {
+    *host.tx_env_mut() = TxEnvExt {
         origin: prepared.sender,
         gas_price: U256::from(prepared.effective),
         chain_id: U256::from(host.version().chain_id),
@@ -504,7 +504,7 @@ fn execute_root(
     };
     let pending = Box::new((signed.clone(), prepared.clone(), pool));
     host.ext_mut().eip8130_root = Some(Eip8130Root(RootState::Pending(pending)));
-    let result = Host::execute_message(host, &env, &mut root);
+    let result = Host::execute_message(host, &mut root);
     let root = host.ext_mut().eip8130_root.take();
     result?;
     match root {
