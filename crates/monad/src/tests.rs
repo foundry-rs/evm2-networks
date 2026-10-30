@@ -14,8 +14,10 @@ use alloy_eips::eip7702::{Authorization, RecoveredAuthority, RecoveredAuthorizat
 use alloy_primitives::{Address, Bytes, Log, TxKind, U256};
 use core::str::FromStr;
 use evm2::{
+    Inspector, InspectorConfig, OpcodeSet,
     ethereum::{LazyAuthorization, LazyTxEip7702, TxEnvelope},
     evm::{AccountInfo as Evm2AccountInfo, InMemoryDB as Evm2Db},
+    interpreter::{Interpreter, Message, MessageResult},
     registry::HandlerError,
 };
 use monad_revm::api::builder::MonadBuilder;
@@ -57,6 +59,7 @@ mod op {
     pub(super) const LOG1: u8 = 0xa1;
     pub(super) const KECCAK256: u8 = 0x20;
     pub(super) const CREATE: u8 = 0xf0;
+    pub(super) const CREATE2: u8 = 0xf5;
     pub(super) const CALL: u8 = 0xf1;
     pub(super) const CALLCODE: u8 = 0xf2;
     pub(super) const RETURN: u8 = 0xf3;
@@ -1738,4 +1741,76 @@ fn standard_feature_flags_are_honored() {
         let observed = run_evm2_without(&scenario, EvmFeatures::EIP3607);
         assert!(matches!(observed.outcome, Outcome::Success { .. }));
     }
+}
+
+/// Records the pc the message hooks see while stepping no opcode.
+#[derive(Default)]
+struct MessagePcs(Vec<usize>);
+
+impl Inspector<crate::MonadEvmTypes> for MessagePcs {
+    fn inspector_config(&self) -> InspectorConfig {
+        InspectorConfig::new().with_steps(OpcodeSet::EMPTY)
+    }
+
+    fn call(
+        &mut self,
+        interp: &mut Interpreter<'_, '_, crate::MonadEvmTypes>,
+        message: &mut Message<crate::MonadEvmTypes>,
+    ) -> Option<MessageResult<crate::MonadEvmTypes>> {
+        if message.depth > 0 {
+            self.0.push(interp.pc());
+        }
+        None
+    }
+
+    fn create(
+        &mut self,
+        interp: &mut Interpreter<'_, '_, crate::MonadEvmTypes>,
+        _message: &mut Message<crate::MonadEvmTypes>,
+    ) -> Option<MessageResult<crate::MonadEvmTypes>> {
+        self.0.push(interp.pc());
+        None
+    }
+}
+
+#[test]
+fn message_hooks_see_monad_message_opcodes_without_steps() {
+    let mut code = Vec::new();
+    let mut expected = Vec::new();
+    for opcode in [op::CALL, op::CALLCODE, op::DELEGATECALL, op::STATICCALL] {
+        code.extend(call_code(opcode, OTHER, 0, 0, 0));
+        expected.push(code.len() - 1);
+        code.push(op::POP);
+    }
+    // A one-byte initcode, `STOP`, from zeroed memory.
+    for opcode in [op::CREATE, op::CREATE2] {
+        if opcode == op::CREATE2 {
+            code.push(op::PUSH0);
+        }
+        code.extend([op::PUSH1, 1, op::PUSH0, op::PUSH0, opcode]);
+        expected.push(code.len() - 1);
+        code.push(op::POP);
+    }
+    code.push(op::STOP);
+
+    let scenario = Scenario::new(
+        MonadHardfork::ALL[MonadHardfork::ALL.len() - 1],
+        vec![
+            funded_caller(),
+            TestAccount::new(TARGET).code(code),
+            TestAccount::new(OTHER).code(vec![op::STOP]),
+        ],
+        TestTx::call(CALLER, TARGET),
+    );
+    let mut evm = MonadEvmFactory.create_evm(
+        scenario.spec,
+        monad_version(scenario.spec, 1),
+        crate::MonadBlockEnv::default(),
+        evm2_db(&scenario),
+    );
+    let tx = Recovered::new_unchecked(evm2_envelope(&scenario.tx), scenario.tx.caller);
+    let mut inspector = MessagePcs::default();
+    let executed = evm.transact_with_inspector(&tx, &mut inspector).unwrap();
+    assert!(executed.commit().status);
+    assert_eq!(inspector.0, expected);
 }

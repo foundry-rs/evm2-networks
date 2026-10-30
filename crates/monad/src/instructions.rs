@@ -451,25 +451,25 @@ fn call_inner<const MIP3: bool>(
 }
 
 /// CALL with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
 pub fn call<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::Call)
 }
 
 /// CALLCODE with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
 pub fn callcode<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::CallCode)
 }
 
 /// DELEGATECALL with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
 pub fn delegatecall<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::DelegateCall)
 }
 
 /// STATICCALL with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
 pub fn staticcall<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::StaticCall)
 }
@@ -482,7 +482,7 @@ pub fn staticcall<const MIP3: bool>(cx: _) -> Result {
 ///
 /// Monad matches the C++ client: contract creation is rejected when execution is happening on
 /// behalf of an EIP-7702 delegated account.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
 pub fn create<const IS_CREATE2: bool, const MIP3: bool>(cx: _) -> Result {
     create_inner::<MIP3>(stack, cx.gas, cx.state, IS_CREATE2)
 }
