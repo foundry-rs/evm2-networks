@@ -29,8 +29,7 @@ unreachable_pub = "warn"
 unused_must_use = "warn"
 
 [workspace.dependencies]
-# evm2: keep in lockstep with the Tempo evm2 integration (tempoxyz/tempo#7871) so every network
-# shares one `evm2` crate graph in Foundry.
+# TODO: repin evm2 to alloy-rs/evm2 `main` once alloy-rs/evm2#873 is merged; 24868e5 is its head.
 evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "24868e54be0bfae070be9d22acb0404ed93f7c4a", default-features = false, features = ["std"] }
 evm2-macros = { git = "https://github.com/alloy-rs/evm2", rev = "24868e54be0bfae070be9d22acb0404ed93f7c4a" }
 
