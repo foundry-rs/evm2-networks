@@ -334,7 +334,7 @@ fn run_op_evm2(s: &Scenario) -> Observed {
                 Outcome::FailedDeposit { gas_used }
             } else if result.status {
                 Outcome::Success { gas_used }
-            } else if result.stop.is_revert() {
+            } else if result.is_revert() {
                 Outcome::Revert { gas_used }
             } else {
                 Outcome::Halt { gas_used }
@@ -558,6 +558,9 @@ fn scenarios() -> Vec<Scenario> {
             (REFUNDER, 0, 50_000, false),
             (TARGET, 0, 20_000, false),
             (TARGET, 0, 20_000, true),
+            // The value exceeds the mint plus the caller's balance.
+            (TARGET, 5_000, 50_000, false),
+            (TARGET, 5_000, 50_000, true),
         ] {
             out.push(Scenario {
                 name: "deposit",
