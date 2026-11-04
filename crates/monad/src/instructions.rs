@@ -327,20 +327,16 @@ fn load_acc_and_calc_gas(
         code = delegated_account.code;
         code_address = delegated_address;
     }
-    let features = state.version().features;
     let mut new_account_state_gas = 0;
     if create_empty_account
         && should_charge_new_account_gas(
-            features.contains(EvmFeatures::EIP161),
+            state.feature(EvmFeatures::EIP161),
             transfers_value,
-            state
-                .host()
-                .target_is_empty_for_new_account_gas(&to, features)
-                .map_err(|error| state.fail(error))?,
+            account.is_empty_for_new_account_gas,
         )
     {
         cost += state.gas_params().get(GasId::NewAccountCost);
-        if features.contains(EvmFeatures::EIP8037) && transfers_value {
+        if state.feature(EvmFeatures::EIP8037) && transfers_value {
             new_account_state_gas = state.gas_params().new_account_state_gas();
         }
     }
@@ -451,25 +447,25 @@ fn call_inner<const MIP3: bool>(
 }
 
 /// CALL with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, hooked)]
 pub fn call<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::Call)
 }
 
 /// CALLCODE with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, hooked)]
 pub fn callcode<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::CallCode)
 }
 
 /// DELEGATECALL with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, hooked)]
 pub fn delegatecall<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::DelegateCall)
 }
 
 /// STATICCALL with Monad delegation dispatch and spec-dependent memory expansion.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, hooked)]
 pub fn staticcall<const MIP3: bool>(cx: _) -> Result {
     call_inner::<MIP3>(stack, cx.gas, cx.state, MessageKind::StaticCall)
 }
@@ -482,7 +478,7 @@ pub fn staticcall<const MIP3: bool>(cx: _) -> Result {
 ///
 /// Monad matches the C++ client: contract creation is rejected when execution is happening on
 /// behalf of an EIP-7702 delegated account.
-#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, dynamic_gas, message)]
+#[instruction(EvmTypes = MonadEvmTypes, no_stack_preamble, hooked)]
 pub fn create<const IS_CREATE2: bool, const MIP3: bool>(cx: _) -> Result {
     create_inner::<MIP3>(stack, cx.gas, cx.state, IS_CREATE2)
 }
@@ -552,11 +548,11 @@ fn create_inner<const MIP3: bool>(
             stack.push(Word::ZERO)?;
             return Ok(());
         }
-        let features = state.version().features;
         if state
             .host()
-            .target_is_empty_for_new_account_gas(&destination, features)
+            .load_account(&destination, false, false)
             .map_err(|error| state.fail(error))?
+            .is_empty_for_new_account_gas
         {
             gas.spend_state(state.gas_params().create_state_gas())?;
             charged_create_state_gas = true;

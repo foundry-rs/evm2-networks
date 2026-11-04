@@ -37,7 +37,7 @@ use evm2::{
     Evm, EvmFeatures, TxResult,
     env::TxEnvExt,
     ethereum::{
-        LazyAuthorization, LazyTxEip7702, TxEnvelope, access_list_counts, effective_gas_price,
+        LazyTxEip7702, TxEnvelope, access_list_counts, effective_gas_price,
         eip7702::{AuthRefunds, apply_auth_list},
         execute_initial_frame, finalize_gas, initial_gas_and_reservoir, intrinsic_and_floor_gas,
         prepare_initial_frame, validate_block_gas_limit, validate_chain_id,
@@ -92,7 +92,7 @@ struct TxFields<'a> {
     value: U256,
     input: &'a Bytes,
     access_list: Option<&'a AccessList>,
-    authorization_list: &'a [LazyAuthorization],
+    eip7702: Option<&'a LazyTxEip7702>,
 }
 
 impl<'a> TxFields<'a> {
@@ -108,7 +108,7 @@ impl<'a> TxFields<'a> {
             value: tx.value,
             input: &tx.input,
             access_list: None,
-            authorization_list: &[],
+            eip7702: None,
         }
     }
 
@@ -124,7 +124,7 @@ impl<'a> TxFields<'a> {
             value: tx.value,
             input: &tx.input,
             access_list: Some(&tx.access_list),
-            authorization_list: &[],
+            eip7702: None,
         }
     }
 
@@ -140,7 +140,7 @@ impl<'a> TxFields<'a> {
             value: tx.value,
             input: &tx.input,
             access_list: Some(&tx.access_list),
-            authorization_list: &[],
+            eip7702: None,
         }
     }
 
@@ -156,7 +156,7 @@ impl<'a> TxFields<'a> {
             value: tx.value,
             input: &tx.input,
             access_list: Some(&tx.access_list),
-            authorization_list: &tx.authorization_list,
+            eip7702: Some(tx),
         }
     }
 }
@@ -176,9 +176,14 @@ fn prepare(
     caller: Address,
     tx: &TxFields<'_>,
 ) -> HandlerResult<MonadPreparedTx> {
-    let is_eip7702 = !tx.authorization_list.is_empty();
+    let authorization_count = tx.eip7702.map_or(0, |tx| tx.authorizations().len());
     // C++ parity (validate_monad_transaction.cpp): the system sender cannot be an authority.
-    if tx.authorization_list.iter().any(|auth| auth.authority() == Some(SYSTEM_ADDRESS)) {
+    if tx
+        .eip7702
+        .into_iter()
+        .flat_map(LazyTxEip7702::authorizations)
+        .any(|auth| auth.authority() == Some(SYSTEM_ADDRESS))
+    {
         return Err(MonadInvalidTransaction::SystemTransactionSenderIsAuthority.into());
     }
 
@@ -208,9 +213,9 @@ fn prepare(
         access_list_storage_keys,
         tx.value,
     );
-    if is_eip7702 {
+    if authorization_count != 0 {
         let per_auth = host.version().gas_params.get(GasId::TxEip7702PerEmptyAccountCost);
-        intrinsic += (tx.authorization_list.len() as u64).saturating_mul(per_auth);
+        intrinsic += (authorization_count as u64).saturating_mul(per_auth);
     }
     validate_intrinsic_gas(tx.gas_limit, intrinsic, 0)?;
     validate_floor_gas(tx.gas_limit, floor_gas)?;
@@ -315,20 +320,20 @@ fn execute_inner(
     let mut tx_gas =
         GasTracker::new_with_execution_gas_and_reservoir(execution_gas_limit, reservoir);
 
-    if !tx.authorization_list.is_empty() {
+    if let Some(eip7702) = tx.eip7702
+        && eip7702.authorizations().len() != 0
+    {
         // Monad disables refunds, so the authorization refunds are discarded.
         let mut refunds = AuthRefunds::new(host.version());
-        apply_auth_list(host, chain_id, tx.authorization_list, &mut refunds)?;
+        apply_auth_list(host, chain_id, eip7702.authorizations(), &mut refunds)?;
     }
 
     host.ext_mut().memory_pool_offset = 0;
     let mut frame =
         prepare_initial_frame(host, caller, tx.nonce, tx.to, tx.input, tx.value, &mut tx_gas)?;
-    if let Some(frame) = &mut frame {
-        // Monad dispatches precompiles at the delegated address of the top-level call, while evm2
-        // dispatches at the call target.
-        frame.message.call_target = frame.message.code_address;
-    }
+    // Monad dispatches precompiles at the delegated address of the top-level call, while evm2
+    // dispatches at the call target.
+    frame.message.call_target = frame.message.code_address;
 
     let effective_gas_price = u128::try_from(gas_price).unwrap_or(u128::MAX);
     begin_reserve_balance_tx(host, caller, effective_gas_price, tx.gas_limit)?;
@@ -482,7 +487,7 @@ fn prepare_eip7702(
 ) -> HandlerResult<MonadPreparedTx> {
     reject_typed_protocol_tx(req.host, req.tx.signer(), 4)?;
     let tx = req.tx.inner();
-    if tx.authorization_list.is_empty() {
+    if tx.authorizations().len() == 0 {
         return Err(HandlerError::EmptyAuthorizationList);
     }
     prepare(req.host, req.tx.signer(), &TxFields::eip7702(tx))

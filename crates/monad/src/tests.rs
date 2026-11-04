@@ -10,12 +10,12 @@ use crate::{
     staking::{STAKING_ADDRESS, constants::SYSTEM_ADDRESS},
 };
 use alloy_consensus::{TxEip1559, TxEip7702, TxLegacy, transaction::Recovered};
-use alloy_eips::eip7702::{Authorization, RecoveredAuthority, RecoveredAuthorization};
+use alloy_eips::eip7702::{Authorization, SignedAuthorization};
 use alloy_primitives::{Address, Bytes, Log, TxKind, U256};
 use core::str::FromStr;
 use evm2::{
     Inspector, InspectorConfig, OpcodeSet,
-    ethereum::{LazyAuthorization, LazyTxEip7702, TxEnvelope},
+    ethereum::{LazyTxEip7702, TxEnvelope},
     evm::{AccountInfo as Evm2AccountInfo, InMemoryDB as Evm2Db},
     interpreter::{Interpreter, Message, MessageResult},
     registry::HandlerError,
@@ -337,17 +337,31 @@ fn evm2_envelope(tx: &TestTx) -> TxEnvelope {
             input: tx.data.clone(),
             ..Default::default()
         };
-        let authorizations = tx
-            .authorizations
-            .iter()
-            .map(|(authority, delegate, nonce)| {
-                LazyAuthorization::from(RecoveredAuthorization::new_unchecked(
-                    Authorization { chain_id: U256::from(1), address: *delegate, nonce: *nonce },
-                    RecoveredAuthority::Valid(*authority),
-                ))
-            })
-            .collect();
-        return TxEnvelope::Eip7702(LazyTxEip7702::from_authorizations(inner, authorizations));
+        let inner = TxEip7702 {
+            authorization_list: tx
+                .authorizations
+                .iter()
+                .map(|(_, delegate, nonce)| {
+                    SignedAuthorization::new_unchecked(
+                        Authorization {
+                            chain_id: U256::from(1),
+                            address: *delegate,
+                            nonce: *nonce,
+                        },
+                        0,
+                        U256::ZERO,
+                        U256::ZERO,
+                    )
+                })
+                .collect(),
+            ..inner
+        };
+        let authorities =
+            tx.authorizations.iter().map(|(authority, _, _)| Some(*authority)).collect();
+        return TxEnvelope::Eip7702(LazyTxEip7702::from_cached_recovered_authorizations(
+            inner,
+            authorities,
+        ));
     }
     match tx.priority_fee {
         Some(priority_fee) => TxEnvelope::Eip1559(TxEip1559 {

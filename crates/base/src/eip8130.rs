@@ -427,7 +427,7 @@ fn execute_calls(
                 &mut gas,
             )?;
             // Calls under the synthetic root are its children.
-            if under_root && let Some(frame) = &mut frame {
+            if under_root {
                 frame.message.depth += 1;
             }
             let result = execute_initial_frame(host, frame, &mut gas, remaining, 0)?;
