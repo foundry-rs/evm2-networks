@@ -29,8 +29,9 @@ unreachable_pub = "warn"
 unused_must_use = "warn"
 
 [workspace.dependencies]
-evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "003352643b1d2b117b305ba2f3415543a4e1ff9b", default-features = false, features = ["std"] }
-evm2-macros = { git = "https://github.com/alloy-rs/evm2", rev = "003352643b1d2b117b305ba2f3415543a4e1ff9b" }
+# Temporary: alloy-rs/evm2#1001 rebased onto upstream main.
+evm2 = { git = "https://github.com/mablr/evm2", rev = "d76647ff571353395f7658b61a93584b0969a1e5", default-features = false, features = ["std"] }
+evm2-macros = { git = "https://github.com/mablr/evm2", rev = "d76647ff571353395f7658b61a93584b0969a1e5" }
 
 # alloy: match Foundry's versions.
 alloy-consensus = { version = "2.5.0", default-features = false }

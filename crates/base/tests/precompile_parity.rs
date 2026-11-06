@@ -79,7 +79,7 @@ fn run_evm2(upgrade: BaseUpgrade, address: Address, input: &[u8]) -> Run {
     );
     let mut precompiles = BasePrecompiles::new(spec);
     let message = Message::<BaseEvmTypes> {
-        input: Bytes::copy_from_slice(input),
+        input: Bytes::copy_from_slice(input).into(),
         code_address: address,
         destination: address,
         call_target: address,
@@ -357,7 +357,7 @@ fn fixed_table_takes_precedence_over_b20_lookup() {
         input: Vec<u8>,
     ) -> evm2::precompiles::PrecompileResult {
         let message = Message::<BaseEvmTypes> {
-            input: input.into(),
+            input: Bytes::from(input).into(),
             code_address: to,
             destination: to,
             call_target: to,
