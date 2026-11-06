@@ -1828,3 +1828,95 @@ fn message_hooks_see_monad_message_opcodes_without_steps() {
     assert!(executed.commit().status);
     assert_eq!(inspector.0, expected);
 }
+
+/// Changes the step mask in a child message hook, while the caller is suspended.
+struct ChildStepMask {
+    steps: OpcodeSet,
+    after: OpcodeSet,
+    observed: Vec<u8>,
+}
+
+impl<T: evm2::EvmTypesHost> Inspector<T> for ChildStepMask {
+    fn inspector_config(&self) -> InspectorConfig {
+        InspectorConfig::new().with_steps(self.steps)
+    }
+
+    fn call(
+        &mut self,
+        _interp: &mut Interpreter<'_, '_, T>,
+        message: &mut Message<T>,
+    ) -> Option<MessageResult<T>> {
+        if message.depth > 0 {
+            self.steps = self.after;
+        }
+        None
+    }
+
+    fn create(
+        &mut self,
+        interp: &mut Interpreter<'_, '_, T>,
+        message: &mut Message<T>,
+    ) -> Option<MessageResult<T>> {
+        self.call(interp, message)
+    }
+
+    fn step(&mut self, interp: &mut Interpreter<'_, '_, T>) {
+        self.observed.push(interp.opcode());
+    }
+}
+
+#[test]
+fn child_message_reloads_monad_caller_step_mask() {
+    let stores = [op::SSTORE].into_iter().collect();
+    let pops = [op::POP].into_iter().collect();
+    for opcode in
+        [op::CALL, op::CALLCODE, op::DELEGATECALL, op::STATICCALL, op::CREATE, op::CREATE2]
+    {
+        let mut code = Vec::new();
+        if matches!(opcode, op::CREATE | op::CREATE2) {
+            if opcode == op::CREATE2 {
+                code.push(op::PUSH0);
+            }
+            // A one-byte initcode, STOP, from zeroed memory.
+            code.extend([op::PUSH1, 1, op::PUSH0, op::PUSH0]);
+        } else {
+            let args = if matches!(opcode, op::CALL | op::CALLCODE) { 5 } else { 4 };
+            code.extend(core::iter::repeat_n(op::PUSH0, args));
+            push_address(&mut code, OTHER);
+            code.extend([op::PUSH2, 0xff, 0xff]);
+        }
+        code.extend([opcode, op::POP, op::PUSH1, 1, op::PUSH0, op::SSTORE, op::STOP]);
+        let scenario = Scenario::new(
+            MonadHardfork::MonadNine,
+            vec![
+                funded_caller(),
+                TestAccount::new(TARGET).code(code),
+                TestAccount::new(OTHER).code(vec![op::STOP]),
+            ],
+            TestTx::call(CALLER, TARGET),
+        );
+        for (name, before, after, expected) in [
+            ("always on", stores, stores, vec![op::SSTORE]),
+            ("enable", OpcodeSet::EMPTY, stores, vec![op::SSTORE]),
+            ("replace", pops, stores, vec![op::SSTORE]),
+            ("disable", stores, OpcodeSet::EMPTY, vec![]),
+        ] {
+            let mut evm = MonadEvmFactory.create_evm(
+                scenario.spec,
+                monad_version(scenario.spec, 1),
+                crate::MonadBlockEnv::default(),
+                evm2_db(&scenario),
+            );
+            let tx = Recovered::new_unchecked(evm2_envelope(&scenario.tx), scenario.tx.caller);
+            let mut inspector = ChildStepMask { steps: before, after, observed: Vec::new() };
+            let executed = evm.transact_with_inspector(&tx, &mut inspector).unwrap();
+            assert!(executed.commit().status, "opcode={opcode:#x}, {name}");
+            assert_eq!(
+                evm.state_mut().read_committed_storage(&TARGET, &U256::ZERO).unwrap(),
+                U256::from(1),
+                "opcode={opcode:#x}, {name}"
+            );
+            assert_eq!(inspector.observed, expected, "opcode={opcode:#x}, {name}");
+        }
+    }
+}
