@@ -140,7 +140,7 @@ macro_rules! capped_precompile {
             message: &Message<BaseEvmTypes>,
             gas: &mut GasTracker,
         ) -> PrecompileResult {
-            let input = message.input.as_ref();
+            let input = &*message.input;
             if input.len() > $max {
                 return Err(PrecompileHalt::$halt.into());
             }

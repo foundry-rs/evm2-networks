@@ -473,7 +473,7 @@ mod tests {
             _interp: &mut Interpreter<'_, '_, MonadEvmTypes>,
             message: &mut Message<MonadEvmTypes>,
         ) -> Option<MessageResult<MonadEvmTypes>> {
-            self.calls.push((message.caller, message.call_target, message.input.clone()));
+            self.calls.push((message.caller, message.call_target, message.input.to_bytes()));
             None
         }
     }

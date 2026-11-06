@@ -512,7 +512,7 @@ pub(crate) fn run_native(
     if message.destination != message.code_address {
         return Err(PrecompileError::Revert(DelegateCallNotAllowed {}.abi_encode().into()));
     }
-    let calldata: Bytes = message.input.clone();
+    let calldata: Bytes = message.input.to_bytes();
     let mut provider =
         BaseStorageProvider::metered(evm, message, gas.remaining(), storage_features);
     let result = StorageCtx::enter(&mut provider, |ctx| body(ctx, &calldata));

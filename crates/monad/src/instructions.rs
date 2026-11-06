@@ -422,7 +422,7 @@ fn call_inner<const MIP3: bool>(
         // target.
         call_target: code_address,
         caller,
-        input,
+        input: input.into(),
         value: call_value,
         code,
         code_address,
@@ -574,7 +574,7 @@ fn create_inner<const MIP3: bool>(
         call_target: destination,
         caller,
         code: Bytecode::new_legacy(input.clone()),
-        input,
+        input: input.into(),
         value,
         code_address: caller,
         caller_is_static: false,

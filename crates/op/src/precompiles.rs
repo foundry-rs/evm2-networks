@@ -312,7 +312,7 @@ mod tests {
     //! Vectors from op-revm's `precompiles.rs` tests.
 
     use super::*;
-    use alloy_primitives::hex;
+    use alloy_primitives::{Bytes, hex};
 
     const BN254_PAIR_ELEMENT_LEN: usize = 192;
 
@@ -360,7 +360,7 @@ mod tests {
         );
         let precompile = op_precompile_map(spec).get(&address).expect("installed");
         let message = Message::<OpEvmTypes> {
-            input: input.to_vec().into(),
+            input: Bytes::copy_from_slice(input).into(),
             code_address: address,
             ..Default::default()
         };
