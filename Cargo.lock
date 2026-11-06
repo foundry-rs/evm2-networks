@@ -1798,7 +1798,7 @@ checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 [[package]]
 name = "evm2"
 version = "0.1.0"
-source = "git+https://github.com/mablr/evm2?rev=d76647ff571353395f7658b61a93584b0969a1e5#d76647ff571353395f7658b61a93584b0969a1e5"
+source = "git+https://github.com/alloy-rs/evm2?rev=cf7a0e4631a820d38d0c23b2b2046f507b6c340b#cf7a0e4631a820d38d0c23b2b2046f507b6c340b"
 dependencies = [
  "alloy-consensus",
  "alloy-eip7928",
@@ -1834,7 +1834,7 @@ dependencies = [
 [[package]]
 name = "evm2-macros"
 version = "0.1.0"
-source = "git+https://github.com/mablr/evm2?rev=d76647ff571353395f7658b61a93584b0969a1e5#d76647ff571353395f7658b61a93584b0969a1e5"
+source = "git+https://github.com/alloy-rs/evm2?rev=cf7a0e4631a820d38d0c23b2b2046f507b6c340b#cf7a0e4631a820d38d0c23b2b2046f507b6c340b"
 dependencies = [
  "proc-macro2",
  "quote",
