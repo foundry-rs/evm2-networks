@@ -498,7 +498,7 @@ fn execute_root(
         destination: EIP8130_ROOT_ADDRESS,
         call_target: EIP8130_ROOT_ADDRESS,
         code_address: EIP8130_ROOT_ADDRESS,
-        input: prepared.encoded.clone(),
+        input: prepared.encoded.clone().into(),
         gas_limit: signed.tx().gas_limit,
         ..MessageExt::default()
     };

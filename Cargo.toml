@@ -29,8 +29,8 @@ unreachable_pub = "warn"
 unused_must_use = "warn"
 
 [workspace.dependencies]
-evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "85395c5440bef1f685142e79c66051014f46f9b5", default-features = false, features = ["std"] }
-evm2-macros = { git = "https://github.com/alloy-rs/evm2", rev = "85395c5440bef1f685142e79c66051014f46f9b5" }
+evm2 = { git = "https://github.com/alloy-rs/evm2", rev = "445ffd5db1fca4884cdbff7f89b59edebf4142ce", default-features = false, features = ["std"] }
+evm2-macros = { git = "https://github.com/alloy-rs/evm2", rev = "445ffd5db1fca4884cdbff7f89b59edebf4142ce" }
 
 # alloy: match Foundry's versions.
 alloy-consensus = { version = "2.5.0", default-features = false }
