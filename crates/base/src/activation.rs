@@ -335,6 +335,8 @@ pub(crate) fn run_activation_registry(
         return Err(PrecompileError::Revert(DelegateCallNotAllowed {}.abi_encode().into()));
     }
 
+    // `Ctx` borrows the EVM mutably, so copy the input out first.
+    let input = Bytes::copy_from_slice(evm.message_input(message));
     let mut ctx = Ctx {
         evm,
         address: message.code_address,
@@ -350,9 +352,9 @@ pub(crate) fn run_activation_registry(
     let result = if upgrade as u8 >= BaseUpgrade::Cobalt as u8 && !message.value.is_zero() {
         Err(Error::revert(IActivationRegistry::NonPayable {}))
     } else {
-        let words = (message.input.len() as u64).div_ceil(32);
+        let words = (input.len() as u64).div_ceil(32);
         ctx.charge(words.saturating_mul(CALLDATA_WORD_GAS))
-            .and_then(|()| ctx.dispatch(&message.input, config))
+            .and_then(|()| ctx.dispatch(&input, config))
     };
 
     let (used, refund) = (ctx.used, ctx.refund);

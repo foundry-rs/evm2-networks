@@ -73,7 +73,7 @@ pub fn run_staking_precompile(
         return Err(PrecompileError::Revert(Bytes::new()));
     }
 
-    let input = message.input.clone();
+    let input = Bytes::copy_from_slice(evm.message_input(message));
     let call_value = message.value;
     let caller = message.caller;
     let mut storage = EvmStakingStorage { evm, error: None };

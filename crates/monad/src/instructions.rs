@@ -133,8 +133,11 @@ pub fn keccak256_mip3(cx: _, [offset, len]: [Word]) -> Result<out> {
 #[instruction(EvmTypes = MonadEvmTypes, dynamic_gas)]
 pub fn calldatacopy(cx: _, [memory_offset, data_offset, len]: [Word]) -> Result {
     let len = len.to_usize()?;
-    let input = cx.state.message().input.clone();
-    mip3_copy(cx.gas, cx.state, *memory_offset, *data_offset, len, &input)
+    // The input borrows the interpreter that `mip3_copy` writes to, so copy only the bytes read.
+    let input = cx.state.input();
+    let start = data_offset.to_usize_saturated().min(input.len());
+    let data = input[start..start.saturating_add(len).min(input.len())].to_vec();
+    mip3_copy(cx.gas, cx.state, *memory_offset, Word::ZERO, len, &data)
 }
 
 /// CODECOPY with MIP-3 linear memory cost.

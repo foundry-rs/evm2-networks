@@ -182,11 +182,11 @@ pub fn monad_point_evaluation_run(input: &[u8], gas: &mut GasTracker) -> Precomp
 macro_rules! input_precompile {
     ($name:ident => $f:path) => {
         fn $name(
-            _evm: &mut Evm<'_, MonadEvmTypes>,
+            evm: &mut Evm<'_, MonadEvmTypes>,
             message: &Message<MonadEvmTypes>,
             gas: &mut GasTracker,
         ) -> PrecompileResult {
-            $f(message.input.as_ref(), gas)
+            $f(evm.message_input(message), gas)
         }
     };
 }
