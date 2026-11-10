@@ -136,11 +136,11 @@ macro_rules! capped_precompile {
     ($(#[$attr:meta])* $name:ident, $max:expr, $halt:ident, $inner:path) => {
         $(#[$attr])*
         pub fn $name(
-            _evm: &mut Evm<'_, BaseEvmTypes>,
+            evm: &mut Evm<'_, BaseEvmTypes>,
             message: &Message<BaseEvmTypes>,
             gas: &mut GasTracker,
         ) -> PrecompileResult {
-            let input = &*message.input;
+            let input = evm.message_input(message);
             if input.len() > $max {
                 return Err(PrecompileHalt::$halt.into());
             }

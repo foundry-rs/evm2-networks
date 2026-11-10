@@ -470,10 +470,14 @@ mod tests {
     impl Inspector<MonadEvmTypes> for CallRecorder {
         fn call(
             &mut self,
-            _interp: &mut Interpreter<'_, '_, MonadEvmTypes>,
+            interp: &mut Interpreter<'_, '_, MonadEvmTypes>,
             message: &mut Message<MonadEvmTypes>,
         ) -> Option<MessageResult<MonadEvmTypes>> {
-            self.calls.push((message.caller, message.call_target, message.input.to_bytes()));
+            self.calls.push((
+                message.caller,
+                message.call_target,
+                message.input.to_bytes(interp.memory()),
+            ));
             None
         }
     }

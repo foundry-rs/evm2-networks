@@ -493,7 +493,7 @@ fn execute_root(
     };
     let mut root = MessageExt {
         kind: MessageKind::Call,
-        depth: host.version().initial_call_depth,
+        depth: host.initial_call_depth(),
         caller: prepared.sender,
         destination: EIP8130_ROOT_ADDRESS,
         call_target: EIP8130_ROOT_ADDRESS,

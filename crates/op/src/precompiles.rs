@@ -31,11 +31,11 @@ macro_rules! op_precompile {
         #[allow(non_snake_case)]
         $vis fn $name() -> Precompile<OpEvmTypes> {
             fn run(
-                _evm: &mut Evm<'_, OpEvmTypes>,
+                evm: &mut Evm<'_, OpEvmTypes>,
                 message: &Message<OpEvmTypes>,
                 gas: &mut GasTracker,
             ) -> PrecompileResult {
-                $f(message.input.as_ref(), gas)
+                $f(evm.message_input(message), gas)
             }
             Precompile::new($address, $id, run)
         }
