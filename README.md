@@ -8,6 +8,7 @@ They are not officially maintained by Tempo.
 
 - [`op-evm2`](crates/op) - OP Stack execution, including deposits, L1 data fees, and operator fees.
 - [`base-evm2`](crates/base) - Base execution, including deposits, native precompiles, and EIP-8130 transactions.
+- [`arc-evm2`](crates/arc) - Arc execution, including native USDC transfer rules, the blocklist, and Arc's precompiles.
 
 ## License
 

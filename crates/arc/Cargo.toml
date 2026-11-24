@@ -1,0 +1,26 @@
+[package]
+name = "arc-evm2"
+description = "evm2 execution type family for Arc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+evm2.workspace = true
+evm2-macros.workspace = true
+alloy-consensus.workspace = true
+alloy-eips.workspace = true
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+slh-dsa = "0.2.0-rc.5"
+thiserror.workspace = true
