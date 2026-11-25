@@ -283,8 +283,10 @@ fn execute_deposit(
         prepare_initial_frame(host, tx.from, nonce, tx.to, &tx.input, tx.value, &mut tx_gas)?;
     let result = execute_initial_frame(host, frame, &mut tx_gas, execution_gas_limit, reservoir)?;
 
-    // Post-Regolith, a halted deposit keeps only the nonce bump and the mint.
-    if result.stop.is_halt() && is_regolith {
+    // Post-Regolith, a deposit whose top-level frame fails for any reason other than `REVERT`
+    // keeps only the nonce bump and the mint. That includes `OutOfFunds` and `CallTooDeep`, which
+    // the interpreter counts as frame-level reverts but op-revm treats as halts here.
+    if !result.stop.is_success() && result.stop != InstrStop::Revert && is_regolith {
         return failed_deposit(host, tx, result.stop, None);
     }
 
